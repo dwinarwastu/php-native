@@ -31,6 +31,7 @@ class GetSurveysUseCase
             'pagination' => [
                 'page' => $page,
                 'limit' => $limit,
+                'total_data' => $totalItems,
                 'total_items' => $totalItems,
                 'total_pages' => $totalPages,
             ],

@@ -30,12 +30,12 @@ class SurveyController
         }
 
         $month = $request->get('month');
-        if (!empty($month)) {
+        if ($month !== null && $month !== '') {
             $filters['month'] = (int)$month;
         }
 
         $year = $request->get('year');
-        if (!empty($year)) {
+        if ($year !== null && $year !== '') {
             $filters['year'] = (int)$year;
         }
 

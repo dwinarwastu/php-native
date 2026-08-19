@@ -22,7 +22,7 @@ class PDOSurveyRepository implements SurveyRepositoryInterface
         $offset = ($page - 1) * $limit;
         [$whereClause, $params] = $this->buildWhereClause($filters);
 
-        $sql = "SELECT * FROM surveys {$whereClause} ORDER BY datetime DESC LIMIT :limit OFFSET :offset";
+        $sql = "SELECT * FROM survey {$whereClause} ORDER BY datetime DESC LIMIT :limit OFFSET :offset";
         $stmt = $this->pdo->prepare($sql);
 
         foreach ($params as $key => $value) {
@@ -58,7 +58,7 @@ class PDOSurveyRepository implements SurveyRepositoryInterface
     {
         [$whereClause, $params] = $this->buildWhereClause($filters);
 
-        $sql = "SELECT COUNT(*) FROM surveys {$whereClause}";
+        $sql = "SELECT COUNT(*) FROM survey {$whereClause}";
         $stmt = $this->pdo->prepare($sql);
 
         foreach ($params as $key => $value) {
@@ -74,20 +74,39 @@ class PDOSurveyRepository implements SurveyRepositoryInterface
     {
         $conditions = [];
         $params = [];
+        $driver = strtolower((string)$this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME));
 
         if (!empty($filters['date'])) {
-            $conditions[] = 'DATE(datetime) = :date';
-            $params[':date'] = $filters['date'];
+            if ($driver === 'pgsql') {
+                $conditions[] = 'CAST(datetime AS DATE) = :date';
+            } else {
+                $conditions[] = 'DATE(datetime) = :date';
+            }
+            $params[':date'] = trim((string)$filters['date']);
         }
 
-        if (!empty($filters['month'])) {
-            $conditions[] = 'EXTRACT(MONTH FROM datetime) = :month';
-            $params[':month'] = (int)$filters['month'];
+        if (isset($filters['month']) && $filters['month'] !== '' && $filters['month'] !== null) {
+            $monthVal = (int)$filters['month'];
+            if ($monthVal >= 1 && $monthVal <= 12) {
+                if ($driver === 'pgsql') {
+                    $conditions[] = 'EXTRACT(MONTH FROM CAST(datetime AS TIMESTAMP)) = :month';
+                } else {
+                    $conditions[] = 'MONTH(datetime) = :month';
+                }
+                $params[':month'] = $monthVal;
+            }
         }
 
-        if (!empty($filters['year'])) {
-            $conditions[] = 'EXTRACT(YEAR FROM datetime) = :year';
-            $params[':year'] = (int)$filters['year'];
+        if (isset($filters['year']) && $filters['year'] !== '' && $filters['year'] !== null) {
+            $yearVal = (int)$filters['year'];
+            if ($yearVal > 0) {
+                if ($driver === 'pgsql') {
+                    $conditions[] = 'EXTRACT(YEAR FROM CAST(datetime AS TIMESTAMP)) = :year';
+                } else {
+                    $conditions[] = 'YEAR(datetime) = :year';
+                }
+                $params[':year'] = $yearVal;
+            }
         }
 
         $whereClause = !empty($conditions) ? 'WHERE ' . implode(' AND ', $conditions) : '';
