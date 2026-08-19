@@ -27,26 +27,26 @@ if ($debugConfig['debug_mode'] ?? false) {
     ini_set('display_errors', '0');
 }
 
-set_exception_handler(function (Throwable $exception) use ($debugConfig) {
+set_exception_handler(function (Throwable $e) use ($debugConfig) {
     $logger = new Logger();
-    $logger->error('Uncaught Exception: ' . $exception->getMessage(), [
-        'file' => $exception->getFile(),
-        'line' => $exception->getLine(),
-        'trace' => $exception->getTraceAsString()
+    $logger->error('Uncaught Exception: ' . $e->getMessage(), [
+        'file' => $e->getFile(),
+        'line' => $e->getLine(),
+        'trace' => $e->getTraceAsString()
     ]);
 
     $details = ($debugConfig['debug_mode'] ?? false) ? [
-        'file' => $exception->getFile(),
-        'line' => $exception->getLine(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine(),
     ] : [];
 
-    Response::error('Internal Server Error: ' . $exception->getMessage(), 500, $details);
+    Response::error('Internal Server Error: ' . $e->getMessage(), 500, $details);
 });
 
 $request = new Request();
 $router = new Router();
 
-$getDatabaseConnection = function () {
+$db = function () {
     static $pdo = null;
     if ($pdo === null) {
         $pdo = Database::getInstance();
@@ -54,26 +54,26 @@ $getDatabaseConnection = function () {
     return $pdo;
 };
 
-$validateApiKeyUseCase = new ValidateApiKeyUseCase($appConfig['auth']['api_key'] ?? '');
+$validateApiKey = new ValidateApiKeyUseCase($appConfig['auth']['api_key'] ?? '');
 $healthController = new HealthController();
 
-$getSurveyController = function () use ($getDatabaseConnection) {
-    $pdo = $getDatabaseConnection();
-    $surveyRepository = new PDOSurveyRepository($pdo);
-    $getSurveysUseCase = new GetSurveysUseCase($surveyRepository);
-    return new SurveyController($getSurveysUseCase);
+$surveyController = function () use ($db) {
+    $pdo = $db();
+    $repo = new PDOSurveyRepository($pdo);
+    $useCase = new GetSurveysUseCase($repo);
+    return new SurveyController($useCase);
 };
 
-$requireApiKey = function (Request $request) use ($validateApiKeyUseCase) {
-    $middleware = new ApiKeyMiddleware($validateApiKeyUseCase);
+$requireApiKey = function (Request $request) use ($validateApiKey) {
+    $middleware = new ApiKeyMiddleware($validateApiKey);
     return $middleware->handle($request);
 };
 
 $router->get('/health', [$healthController, 'check']);
 $router->get('/api/health', [$healthController, 'check']);
 
-$router->get('/api/surveys', function (Request $request) use ($getSurveyController) {
-    $getSurveyController()->index($request);
+$router->get('/api/surveys', function (Request $request) use ($surveyController) {
+    $surveyController()->index($request);
 }, [$requireApiKey]);
 
 $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';

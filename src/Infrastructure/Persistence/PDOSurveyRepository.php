@@ -20,20 +20,20 @@ class PDOSurveyRepository implements SurveyRepositoryInterface
     public function findSurveys(array $filters, int $page, int $limit): array
     {
         $offset = ($page - 1) * $limit;
-        [$whereClause, $params] = $this->buildWhereClause($filters);
+        [$where, $params] = $this->buildWhereClause($filters);
 
-        $sqlQuery = "SELECT * FROM survey {$whereClause} ORDER BY datetime DESC LIMIT :limit OFFSET :offset";
-        $statement = $this->pdo->prepare($sqlQuery);
+        $sql = "SELECT * FROM survey {$where} ORDER BY datetime DESC LIMIT :limit OFFSET :offset";
+        $stmt = $this->pdo->prepare($sql);
 
         foreach ($params as $key => $value) {
-            $statement->bindValue($key, $value);
+            $stmt->bindValue($key, $value);
         }
 
-        $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
-        $statement->bindValue(':offset', $offset, PDO::PARAM_INT);
-        $statement->execute();
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
 
-        $rows = $statement->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $surveys = [];
 
         foreach ($rows as $data) {
@@ -56,18 +56,18 @@ class PDOSurveyRepository implements SurveyRepositoryInterface
 
     public function countSurveys(array $filters): int
     {
-        [$whereClause, $params] = $this->buildWhereClause($filters);
+        [$where, $params] = $this->buildWhereClause($filters);
 
-        $sqlQuery = "SELECT COUNT(*) FROM survey {$whereClause}";
-        $statement = $this->pdo->prepare($sqlQuery);
+        $sql = "SELECT COUNT(*) FROM survey {$where}";
+        $stmt = $this->pdo->prepare($sql);
 
         foreach ($params as $key => $value) {
-            $statement->bindValue($key, $value);
+            $stmt->bindValue($key, $value);
         }
 
-        $statement->execute();
+        $stmt->execute();
 
-        return (int)$statement->fetchColumn();
+        return (int)$stmt->fetchColumn();
     }
 
     private function buildWhereClause(array $filters): array
@@ -112,8 +112,8 @@ class PDOSurveyRepository implements SurveyRepositoryInterface
             }
         }
 
-        $whereClause = !empty($conditions) ? 'WHERE ' . implode(' AND ', $conditions) : '';
+        $where = !empty($conditions) ? 'WHERE ' . implode(' AND ', $conditions) : '';
 
-        return [$whereClause, $params];
+        return [$where, $params];
     }
 }
