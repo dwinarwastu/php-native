@@ -2,7 +2,7 @@
 
 > Production-grade RESTful API backend — built to show real-world PHP Native architecture.
 
-Built with **PHP 8**, **PDO MySQL**, and **Clean Architecture** principles. Exposes a lightweight API protected by API Key authentication.
+Built with **PHP 8**, **PostgreSQL / MySQL**, and **Clean Architecture** principles. Exposes a lightweight API protected by API Key authentication.
 
 ---
 
@@ -12,7 +12,7 @@ Built with **PHP 8**, **PDO MySQL**, and **Clean Architecture** principles. Expo
 |---|---|
 | Language | PHP 8.0+ |
 | Architecture | Clean Architecture (Domain, Application, Infrastructure) |
-| Database | MySQL / MariaDB (PDO) |
+| Database | PostgreSQL / MySQL (PDO) |
 | Authentication | API Key Middleware (`X-API-KEY`) |
 | Package Manager | Composer (PSR-4 Autoloading) |
 
@@ -44,24 +44,36 @@ config/
 ├── app.php
 ├── database.php
 └── debug.php
+database/
+└── surveys.sql
 public/
 ├── .htaccess
 └── index.php
 src/
 ├── Domain/
+│   ├── Entities/
+│   │   └── Survey.php
+│   └── Repositories/
+│       └── SurveyRepositoryInterface.php
 ├── Application/
 │   ├── Exceptions/
 │   └── UseCases/
-│       └── Auth/
+│       ├── Auth/
+│       └── Survey/
+│           └── GetSurveysUseCase.php
 └── Infrastructure/
     ├── Database/
     ├── Http/
     │   ├── Controllers/
+    │   │   ├── HealthController.php
+    │   │   └── SurveyController.php
     │   ├── Middlewares/
     │   ├── Request.php
     │   ├── Response.php
     │   └── Router.php
-    └── Logger/
+    ├── Logger/
+    └── Persistence/
+        └── PDOSurveyRepository.php
 ```
 
 ---
@@ -85,32 +97,6 @@ php -S localhost:8000 -t public
 
 ---
 
-## Configuration Variables
-
-### Application Config (`config/app.php`)
-
-| Field | Description | Default |
-|---|---|---|
-| `name` | Application name | `PHP Native` |
-| `env` | Environment | `development` |
-| `version` | Application version | `1.0.0` |
-| `auth.header` | HTTP header name for API Key | `HTTP_X_API_KEY` |
-| `auth.api_key` | 32-character API Key | `c3a08deba2285418da7cc14c1b22efec` |
-| `cors.allowed_origins` | CORS allowed origins | `*` |
-| `cors.allowed_methods` | CORS allowed methods | `GET, POST, PUT, DELETE, OPTIONS` |
-
-### Database Config (`config/database.php`)
-
-| Field | Description | Default |
-|---|---|---|
-| `driver` | Database driver | `mysql` |
-| `host` | Database host | `localhost` |
-| `database` | Database name | `php_native` |
-| `username` | Database username | `root` |
-| `password` | Database password | `""` |
-
----
-
 ## API Reference
 
 ### Health Check
@@ -120,36 +106,51 @@ GET /health
 GET /api/health
 ```
 
+---
+
+### Get Surveys (Paginated & Filtered)
+
+```http
+GET /api/surveys?page=1&limit=10&date=2026-08-19&month=8&year=2026
+X-API-KEY: c3a08deba2285418da7cc14c1b22efec
+```
+
+| Query Param | Type | Required | Description |
+|---|---|---|---|
+| `page` | `int` | No | Page number (default: `1`) |
+| `limit` | `int` | No | Items per page (default: `10`, max: `100`) |
+| `date` | `string` | No | Filter by exact date (`YYYY-MM-DD`) |
+| `month` | `int` | No | Filter by month (`1-12`) |
+| `year` | `int` | No | Filter by year (`YYYY`) |
+
 **Response — Success (`200 OK`)**
 
 ```json
 {
   "success": true,
-  "message": "API Service is operational",
+  "message": "Surveys retrieved successfully",
   "data": {
-    "status": "UP",
-    "timestamp": "2026-08-19T10:00:00Z",
-    "app": "PHP Native",
-    "version": "1.0.0"
+    "items": [
+      {
+        "id": 1,
+        "username": "johndoe",
+        "visit": "First Time",
+        "site": "Main Office",
+        "resource": "Website",
+        "nation": "Indonesia",
+        "bali": "Yes",
+        "visit_time": "Morning",
+        "news": "Social Media",
+        "datetime": "2026-08-19 10:00:00"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 10,
+      "total_items": 1,
+      "total_pages": 1
+    }
   }
-}
-```
-
----
-
-### Protected Endpoint Example
-
-```http
-GET /api/your-endpoint
-X-API-KEY: c3a08deba2285418da7cc14c1b22efec
-```
-
-**Response — Unauthorized (`401 Unauthorized`)**
-
-```json
-{
-  "success": false,
-  "error": "Unauthorized: Invalid or missing API Key"
 }
 ```
 
