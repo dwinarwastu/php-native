@@ -1,132 +1,151 @@
-# PHP Native RESTful API Backend
+# PHP Native
 
-A lightweight PHP Native RESTful API backend service implementing Clean Architecture principles. Designed for secure server-to-server and client communication using API Key authentication.
+> Production-grade RESTful API backend — built to show real-world PHP Native architecture.
 
-## Table of Contents
-- [Features](#features)
-- [Project Structure](#project-structure)
-- [System Requirements](#system-requirements)
-- [Installation and Configuration](#installation-and-configuration)
-- [API Key Authentication](#api-key-authentication)
-- [API Documentation](#api-documentation)
-- [Running the Application](#running-the-application)
-- [Extending the Codebase](#extending-the-codebase)
-- [License](#license)
+Built with **PHP 8**, **PDO MySQL**, and **Clean Architecture** principles. Exposes a lightweight API protected by API Key authentication.
 
-## Features
+---
 
-- **Clean Architecture**: Clear separation between Domain, Application, and Infrastructure layers.
-- **Lightweight & Fast**: Built with native PHP without heavy framework overhead.
-- **API Key Authentication**: Simple, secure request validation via the `X-API-KEY` HTTP header.
-- **Standardized Response**: Unified JSON response structure across all endpoints (`success`, `message`, `data`, `error`).
-- **CORS Support**: Configurable Cross-Origin Resource Sharing for seamless client integration.
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Language | PHP 8.0+ |
+| Architecture | Clean Architecture (Domain, Application, Infrastructure) |
+| Database | MySQL / MariaDB (PDO) |
+| Authentication | API Key Middleware (`X-API-KEY`) |
+| Package Manager | Composer (PSR-4 Autoloading) |
+
+---
+
+## How It Works
+
+1. **Authenticate** — Client or internal service calls an API endpoint with the `X-API-KEY` HTTP header
+2. **Dispatch** — `public/index.php` routes the incoming HTTP request through `Router`
+3. **Evaluate** — `ApiKeyMiddleware` invokes `ValidateApiKeyUseCase` to verify the key against `config/app.php`
+4. **Response** — Returns standardized JSON with `success: true/false`, HTTP status code, and payload or error message
+
+---
+
+## Architecture Layers
+
+The codebase strictly adheres to Clean Architecture principles:
+
+- **Domain Layer (`src/Domain`)**: Enterprise business entities and repository abstractions without external dependencies.
+- **Application Layer (`src/Application`)**: Use cases orchestrating application workflow logic and domain exceptions.
+- **Infrastructure Layer (`src/Infrastructure`)**: Technical implementations including HTTP router, controllers, middleware, logger, and database connections.
+
+---
 
 ## Project Structure
 
 ```
-├── config/
-│   ├── app.php
-│   ├── database.php
-│   └── debug.php
-├── public/
-│   ├── .htaccess
-│   └── index.php
-├── src/
-│   ├── Domain/
-│   ├── Application/
-│   │   ├── Exceptions/
-│   │   └── UseCases/
-│   │       └── Auth/
-│   └── Infrastructure/
-│       ├── Database/
-│       ├── Http/
-│       │   ├── Controllers/
-│       │   ├── Middlewares/
-│       │   ├── Request.php
-│       │   ├── Response.php
-│       │   └── Router.php
-│       └── Logger/
-├── composer.json
-└── README.md
+config/
+├── app.php
+├── database.php
+└── debug.php
+public/
+├── .htaccess
+└── index.php
+src/
+├── Domain/
+├── Application/
+│   ├── Exceptions/
+│   └── UseCases/
+│       └── Auth/
+└── Infrastructure/
+    ├── Database/
+    ├── Http/
+    │   ├── Controllers/
+    │   ├── Middlewares/
+    │   ├── Request.php
+    │   ├── Response.php
+    │   └── Router.php
+    └── Logger/
 ```
 
-### Architecture Layer Overview
-1. **Domain Layer (`src/Domain`)**: Enterprise business entities and repository abstractions without external dependencies.
-2. **Application Layer (`src/Application`)**: Use cases orchestrating application workflow logic.
-3. **Infrastructure Layer (`src/Infrastructure`)**: Technical implementations including HTTP router, controllers, middleware, and database connections.
+---
 
-## System Requirements
+## Getting Started
+
+### Prerequisites
 
 - PHP 7.4 or 8.0+
 - Composer
 
-## Installation and Configuration
-
-### 1. Install Dependencies
+### Run Locally
 
 ```bash
-git clone <repository-url>
-cd php-native
+# Install dependencies
 composer install
+
+# Start built-in PHP development server
+php -S localhost:8000 -t public
 ```
 
-### 2. Configuration
+---
 
-Set up application settings in `config/app.php`:
+## Configuration Variables
 
-```php
-return [
-    'name' => 'PHP Native',
-    'env' => 'development',
-    'version' => '1.0.0',
+### Application Config (`config/app.php`)
 
-    'auth' => [
-        'header' => 'HTTP_X_API_KEY',
-        'api_key' => 'c3a08deba2285418da7cc14c1b22efec',
-    ],
+| Field | Description | Default |
+|---|---|---|
+| `name` | Application name | `PHP Native` |
+| `env` | Environment | `development` |
+| `version` | Application version | `1.0.0` |
+| `auth.header` | HTTP header name for API Key | `HTTP_X_API_KEY` |
+| `auth.api_key` | 32-character API Key | `c3a08deba2285418da7cc14c1b22efec` |
+| `cors.allowed_origins` | CORS allowed origins | `*` |
+| `cors.allowed_methods` | CORS allowed methods | `GET, POST, PUT, DELETE, OPTIONS` |
 
-    'cors' => [
-        'allowed_origins' => '*',
-        'allowed_methods' => 'GET, POST, PUT, DELETE, OPTIONS',
-        'allowed_headers' => 'Content-Type, X-API-Key, Authorization',
-    ],
-];
-```
+### Database Config (`config/database.php`)
 
-## API Key Authentication
+| Field | Description | Default |
+|---|---|---|
+| `driver` | Database driver | `mysql` |
+| `host` | Database host | `localhost` |
+| `database` | Database name | `php_native` |
+| `username` | Database username | `root` |
+| `password` | Database password | `""` |
 
-Protected endpoints require the `X-API-KEY` header in HTTP requests:
+---
+
+## API Reference
+
+### Health Check
 
 ```http
-GET /health HTTP/1.1
-Host: localhost:8000
-X-API-KEY: c3a08deba2285418da7cc14c1b22efec
+GET /health
+GET /api/health
 ```
 
-## API Documentation
+**Response — Success (`200 OK`)**
 
-| Method | Endpoint | Auth Required | Description |
-| :--- | :--- | :---: | :--- |
-| `GET` | `/health` | No | Health check status endpoint |
-| `GET` | `/api/health` | No | Health check status endpoint |
-
-### API Responses
-
-#### Success Response (`200 OK`)
 ```json
 {
   "success": true,
   "message": "API Service is operational",
   "data": {
     "status": "UP",
-    "timestamp": "2026-08-19 10:00:00",
+    "timestamp": "2026-08-19T10:00:00Z",
     "app": "PHP Native",
     "version": "1.0.0"
   }
 }
 ```
 
-#### Unauthorized Response (`401 Unauthorized`)
+---
+
+### Protected Endpoint Example
+
+```http
+GET /api/your-endpoint
+X-API-KEY: c3a08deba2285418da7cc14c1b22efec
+```
+
+**Response — Unauthorized (`401 Unauthorized`)**
+
 ```json
 {
   "success": false,
@@ -134,29 +153,8 @@ X-API-KEY: c3a08deba2285418da7cc14c1b22efec
 }
 ```
 
-## Running the Application
-
-Start the built-in PHP development server:
-
-```bash
-php -S localhost:8000 -t public
-```
-
-Test health check:
-
-```bash
-curl -i http://localhost:8000/api/health
-```
-
-## Extending the Codebase
-
-To add new features (e.g., Products or Orders), follow these steps:
-
-1. **Domain Layer**: Add Entity in `src/Domain/Entities/` and Repository Interface in `src/Domain/Repositories/`.
-2. **Application Layer**: Add Use Case in `src/Application/UseCases/`.
-3. **Infrastructure Layer**: Implement Repository in `src/Infrastructure/Persistence/` and Controller in `src/Infrastructure/Http/Controllers/`.
-4. **Routing**: Register the new route in `public/index.php`.
+---
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the [MIT License](LICENSE).
