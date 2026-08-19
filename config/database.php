@@ -3,12 +3,11 @@
 declare(strict_types=1);
 
 return [
-    'driver' => 'mysql',
+    'driver' => 'pgsql',
     'host' => 'localhost',
+    'port' => 5432,
     'database' => 'php_native',
-    'username' => 'root',
+    'username' => 'postgres',
     'password' => '',
-    'charset' => 'utf8mb4',
-    'collation' => 'utf8mb4_unicode_ci',
-    'prefix' => '',
+    'charset' => 'utf8',
 ];

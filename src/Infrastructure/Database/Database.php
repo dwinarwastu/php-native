@@ -20,18 +20,22 @@ class Database
             self::$logger = new Logger();
 
             try {
-                $dsn = sprintf(
-                    "%s:host=%s;dbname=%s;charset=%s",
-                    $config['driver'],
-                    $config['host'],
-                    $config['database'],
-                    $config['charset']
-                );
+                $driver = strtolower((string)($config['driver'] ?? 'pgsql'));
+                $host = (string)($config['host'] ?? 'localhost');
+                $port = (int)($config['port'] ?? ($driver === 'pgsql' ? 5432 : 3306));
+                $dbname = (string)($config['database'] ?? 'php_native');
+                $charset = (string)($config['charset'] ?? 'utf8');
+
+                if ($driver === 'pgsql') {
+                    $dsn = sprintf("pgsql:host=%s;port=%d;dbname=%s", $host, $port, $dbname);
+                } else {
+                    $dsn = sprintf("mysql:host=%s;port=%d;dbname=%s;charset=%s", $host, $port, $dbname, $charset);
+                }
 
                 self::$instance = new PDO(
                     $dsn,
-                    $config['username'],
-                    $config['password'],
+                    (string)($config['username'] ?? ''),
+                    (string)($config['password'] ?? ''),
                     [
                         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
