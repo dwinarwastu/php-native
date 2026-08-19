@@ -22,18 +22,18 @@ class PDOSurveyRepository implements SurveyRepositoryInterface
         $offset = ($page - 1) * $limit;
         [$whereClause, $params] = $this->buildWhereClause($filters);
 
-        $sql = "SELECT * FROM survey {$whereClause} ORDER BY datetime DESC LIMIT :limit OFFSET :offset";
-        $stmt = $this->pdo->prepare($sql);
+        $sqlQuery = "SELECT * FROM survey {$whereClause} ORDER BY datetime DESC LIMIT :limit OFFSET :offset";
+        $statement = $this->pdo->prepare($sqlQuery);
 
         foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value);
+            $statement->bindValue($key, $value);
         }
 
-        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-        $stmt->execute();
+        $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $statement->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $statement->execute();
 
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $statement->fetchAll(PDO::FETCH_ASSOC);
         $surveys = [];
 
         foreach ($rows as $data) {
@@ -58,16 +58,16 @@ class PDOSurveyRepository implements SurveyRepositoryInterface
     {
         [$whereClause, $params] = $this->buildWhereClause($filters);
 
-        $sql = "SELECT COUNT(*) FROM survey {$whereClause}";
-        $stmt = $this->pdo->prepare($sql);
+        $sqlQuery = "SELECT COUNT(*) FROM survey {$whereClause}";
+        $statement = $this->pdo->prepare($sqlQuery);
 
         foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value);
+            $statement->bindValue($key, $value);
         }
 
-        $stmt->execute();
+        $statement->execute();
 
-        return (int)$stmt->fetchColumn();
+        return (int)$statement->fetchColumn();
     }
 
     private function buildWhereClause(array $filters): array
@@ -77,38 +77,38 @@ class PDOSurveyRepository implements SurveyRepositoryInterface
         $driver = strtolower((string)$this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME));
 
         if (isset($filters['date']) && $filters['date'] !== '' && $filters['date'] !== null) {
-            $dayVal = (int)$filters['date'];
-            if ($dayVal >= 1 && $dayVal <= 31) {
+            $day = (int)$filters['date'];
+            if ($day >= 1 && $day <= 31) {
                 if ($driver === 'pgsql') {
                     $conditions[] = 'EXTRACT(DAY FROM CAST(datetime AS TIMESTAMP)) = :day';
                 } else {
                     $conditions[] = 'DAY(datetime) = :day';
                 }
-                $params[':day'] = $dayVal;
+                $params[':day'] = $day;
             }
         }
 
         if (isset($filters['month']) && $filters['month'] !== '' && $filters['month'] !== null) {
-            $monthVal = (int)$filters['month'];
-            if ($monthVal >= 1 && $monthVal <= 12) {
+            $month = (int)$filters['month'];
+            if ($month >= 1 && $month <= 12) {
                 if ($driver === 'pgsql') {
                     $conditions[] = 'EXTRACT(MONTH FROM CAST(datetime AS TIMESTAMP)) = :month';
                 } else {
                     $conditions[] = 'MONTH(datetime) = :month';
                 }
-                $params[':month'] = $monthVal;
+                $params[':month'] = $month;
             }
         }
 
         if (isset($filters['year']) && $filters['year'] !== '' && $filters['year'] !== null) {
-            $yearVal = (int)$filters['year'];
-            if ($yearVal > 0) {
+            $year = (int)$filters['year'];
+            if ($year > 0) {
                 if ($driver === 'pgsql') {
                     $conditions[] = 'EXTRACT(YEAR FROM CAST(datetime AS TIMESTAMP)) = :year';
                 } else {
                     $conditions[] = 'YEAR(datetime) = :year';
                 }
-                $params[':year'] = $yearVal;
+                $params[':year'] = $year;
             }
         }
 

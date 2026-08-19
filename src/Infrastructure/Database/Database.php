@@ -23,13 +23,13 @@ class Database
                 $driver = strtolower((string)($config['driver'] ?? 'pgsql'));
                 $host = (string)($config['host'] ?? 'localhost');
                 $port = (int)($config['port'] ?? ($driver === 'pgsql' ? 5432 : 3306));
-                $dbname = (string)($config['database'] ?? 'php_native');
+                $databaseName = (string)($config['database'] ?? 'php_native');
                 $charset = (string)($config['charset'] ?? 'utf8');
 
                 if ($driver === 'pgsql') {
-                    $dsn = sprintf("pgsql:host=%s;port=%d;dbname=%s", $host, $port, $dbname);
+                    $dsn = sprintf("pgsql:host=%s;port=%d;dbname=%s", $host, $port, $databaseName);
                 } else {
-                    $dsn = sprintf("mysql:host=%s;port=%d;dbname=%s;charset=%s", $host, $port, $dbname, $charset);
+                    $dsn = sprintf("mysql:host=%s;port=%d;dbname=%s;charset=%s", $host, $port, $databaseName, $charset);
                 }
 
                 self::$instance = new PDO(
@@ -42,11 +42,11 @@ class Database
                         PDO::ATTR_EMULATE_PREPARES => false
                     ]
                 );
-            } catch (PDOException $e) {
+            } catch (PDOException $exception) {
                 self::$logger->error('Database connection failed', [
-                    'error' => $e->getMessage()
+                    'error' => $exception->getMessage()
                 ]);
-                throw $e;
+                throw $exception;
             }
         }
 
