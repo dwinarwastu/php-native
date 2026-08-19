@@ -20,7 +20,7 @@ class PDOSurveyRepository implements SurveyRepositoryInterface
     public function findSurveys(array $filters, int $page, int $limit): array
     {
         $offset = ($page - 1) * $limit;
-        [$where, $params] = $this->buildWhereClause($filters);
+        [$where, $params] = $this->applyFilters($filters);
 
         $sql = "SELECT * FROM survey {$where} ORDER BY datetime DESC LIMIT :limit OFFSET :offset";
         $stmt = $this->pdo->prepare($sql);
@@ -56,7 +56,7 @@ class PDOSurveyRepository implements SurveyRepositoryInterface
 
     public function countSurveys(array $filters): int
     {
-        [$where, $params] = $this->buildWhereClause($filters);
+        [$where, $params] = $this->applyFilters($filters);
 
         $sql = "SELECT COUNT(*) FROM survey {$where}";
         $stmt = $this->pdo->prepare($sql);
@@ -70,7 +70,7 @@ class PDOSurveyRepository implements SurveyRepositoryInterface
         return (int)$stmt->fetchColumn();
     }
 
-    private function buildWhereClause(array $filters): array
+    private function applyFilters(array $filters): array
     {
         $conditions = [];
         $params = [];

@@ -46,7 +46,7 @@ class Router
 
     public function dispatch(Request $request, string $basePath = ''): void
     {
-        $this->handleCors();
+        $this->applyCorsHeaders();
 
         if ($request->getMethod() === 'OPTIONS') {
             http_response_code(200);
@@ -100,7 +100,7 @@ class Router
         Response::notFound('Route ' . $request->getMethod() . ' ' . $requestPath . ' not found');
     }
 
-    private function handleCors(): void
+    private function applyCorsHeaders(): void
     {
         $configPath = __DIR__ . '/../../../config/app.php';
         $appConfig = file_exists($configPath) ? require $configPath : [];
