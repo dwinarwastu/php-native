@@ -111,7 +111,7 @@ GET /api/health
 ### Get Surveys (Paginated & Filtered)
 
 ```http
-GET /api/surveys?page=1&limit=10&date=2026-08-19&month=8&year=2026
+GET /api/surveys?page=1&limit=10&date=19&month=8&year=2026
 X-API-KEY: c3a08deba2285418da7cc14c1b22efec
 ```
 
@@ -119,7 +119,7 @@ X-API-KEY: c3a08deba2285418da7cc14c1b22efec
 |---|---|---|---|
 | `page` | `int` | No | Page number (default: `1`) |
 | `limit` | `int` | No | Items per page (default: `10`, max: `100`) |
-| `date` | `string` | No | Filter by exact date (`YYYY-MM-DD`) |
+| `date` | `int` | No | Filter by day of month (`1-31`) |
 | `month` | `int` | No | Filter by month (`1-12`) |
 | `year` | `int` | No | Filter by year (`YYYY`) |
 

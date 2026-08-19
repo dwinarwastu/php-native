@@ -76,13 +76,16 @@ class PDOSurveyRepository implements SurveyRepositoryInterface
         $params = [];
         $driver = strtolower((string)$this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME));
 
-        if (!empty($filters['date'])) {
-            if ($driver === 'pgsql') {
-                $conditions[] = 'CAST(datetime AS DATE) = :date';
-            } else {
-                $conditions[] = 'DATE(datetime) = :date';
+        if (isset($filters['date']) && $filters['date'] !== '' && $filters['date'] !== null) {
+            $dayVal = (int)$filters['date'];
+            if ($dayVal >= 1 && $dayVal <= 31) {
+                if ($driver === 'pgsql') {
+                    $conditions[] = 'EXTRACT(DAY FROM CAST(datetime AS TIMESTAMP)) = :day';
+                } else {
+                    $conditions[] = 'DAY(datetime) = :day';
+                }
+                $params[':day'] = $dayVal;
             }
-            $params[':date'] = trim((string)$filters['date']);
         }
 
         if (isset($filters['month']) && $filters['month'] !== '' && $filters['month'] !== null) {

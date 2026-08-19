@@ -25,8 +25,8 @@ class SurveyController
         $filters = [];
 
         $date = $request->get('date');
-        if (!empty($date)) {
-            $filters['date'] = (string)$date;
+        if ($date !== null && $date !== '') {
+            $filters['date'] = (int)$date;
         }
 
         $month = $request->get('month');
