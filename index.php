@@ -71,11 +71,19 @@ try {
     $limit = max(1, min(100, (int)($_GET['limit'] ?? 10)));
     $offset = ($page - 1) * $limit;
 
+    $hasFilter = (isset($_GET['date']) && $_GET['date'] !== '') ||
+                 (isset($_GET['month']) && $_GET['month'] !== '') ||
+                 (isset($_GET['year']) && $_GET['year'] !== '');
+
+    $dateParam = $hasFilter ? ($_GET['date'] ?? '') : date('d');
+    $monthParam = $hasFilter ? ($_GET['month'] ?? '') : date('m');
+    $yearParam = $hasFilter ? ($_GET['year'] ?? '') : date('Y');
+
     $conditions = [];
     $params = [];
 
-    if (isset($_GET['date']) && $_GET['date'] !== '') {
-        $day = (int)$_GET['date'];
+    if ($dateParam !== '') {
+        $day = (int)$dateParam;
         if ($day >= 1 && $day <= 31) {
             if ($driver === 'pgsql') {
                 $conditions[] = 'EXTRACT(DAY FROM CAST(datetime AS TIMESTAMP)) = :day';
@@ -86,8 +94,8 @@ try {
         }
     }
 
-    if (isset($_GET['month']) && $_GET['month'] !== '') {
-        $month = (int)$_GET['month'];
+    if ($monthParam !== '') {
+        $month = (int)$monthParam;
         if ($month >= 1 && $month <= 12) {
             if ($driver === 'pgsql') {
                 $conditions[] = 'EXTRACT(MONTH FROM CAST(datetime AS TIMESTAMP)) = :month';
@@ -98,8 +106,8 @@ try {
         }
     }
 
-    if (isset($_GET['year']) && $_GET['year'] !== '') {
-        $year = (int)$_GET['year'];
+    if ($yearParam !== '') {
+        $year = (int)$yearParam;
         if ($year > 0) {
             if ($driver === 'pgsql') {
                 $conditions[] = 'EXTRACT(YEAR FROM CAST(datetime AS TIMESTAMP)) = :year';
