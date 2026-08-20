@@ -165,12 +165,10 @@ try {
         'message' => 'Surveys retrieved successfully',
         'data' => [
             'items' => $items,
-            'pagination' => [
-                'page' => $page,
-                'limit' => $limit,
-                'total_items' => $totalItems,
-                'total_pages' => $totalPages,
-            ]
+            'page' => $page,
+            'limit' => $limit,
+            'total_items' => $totalItems,
+            'total_pages' => $totalPages,
         ]
     ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
