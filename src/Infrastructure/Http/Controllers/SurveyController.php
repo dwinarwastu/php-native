@@ -22,21 +22,30 @@ class SurveyController
         $page = (int)$request->get('page', 1);
         $limit = (int)$request->get('limit', 10);
 
+        $date = $request->get('date');
+        $month = $request->get('month');
+        $year = $request->get('year');
+
+        $hasFilter = ($date !== null && $date !== '') ||
+                     ($month !== null && $month !== '') ||
+                     ($year !== null && $year !== '');
+
         $filters = [];
 
-        $date = $request->get('date');
-        if ($date !== null && $date !== '') {
-            $filters['date'] = (int)$date;
-        }
-
-        $month = $request->get('month');
-        if ($month !== null && $month !== '') {
-            $filters['month'] = (int)$month;
-        }
-
-        $year = $request->get('year');
-        if ($year !== null && $year !== '') {
-            $filters['year'] = (int)$year;
+        if (!$hasFilter) {
+            $filters['date'] = (int)date('d');
+            $filters['month'] = (int)date('m');
+            $filters['year'] = (int)date('Y');
+        } else {
+            if ($date !== null && $date !== '') {
+                $filters['date'] = (int)$date;
+            }
+            if ($month !== null && $month !== '') {
+                $filters['month'] = (int)$month;
+            }
+            if ($year !== null && $year !== '') {
+                $filters['year'] = (int)$year;
+            }
         }
 
         $result = $this->getSurveysUseCase->execute($filters, $page, $limit);
