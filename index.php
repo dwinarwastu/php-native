@@ -1,28 +1,39 @@
 <?php
 
-declare(strict_types=1);
-
 header('Content-Type: application/json; charset=utf-8');
+
+if (!function_exists('getallheaders')) {
+    function getallheaders() {
+        $headers = array();
+        foreach ($_SERVER as $name => $value) {
+            if (substr($name, 0, 5) == 'HTTP_') {
+                $headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
+            }
+        }
+        return $headers;
+    }
+}
 
 $appConfig = require __DIR__ . '/config/app.php';
 $dbConfig = require __DIR__ . '/config/database.php';
 
-$origin = $appConfig['cors']['allowed_origins'] ?? '*';
-$methods = $appConfig['cors']['allowed_methods'] ?? 'GET, POST, PUT, DELETE, OPTIONS';
-$headers = $appConfig['cors']['allowed_headers'] ?? 'Content-Type, X-API-Key, Authorization';
+$origin = isset($appConfig['cors']['allowed_origins']) ? $appConfig['cors']['allowed_origins'] : '*';
+$methods = isset($appConfig['cors']['allowed_methods']) ? $appConfig['cors']['allowed_methods'] : 'GET, POST, PUT, DELETE, OPTIONS';
+$headers = isset($appConfig['cors']['allowed_headers']) ? $appConfig['cors']['allowed_headers'] : 'Content-Type, X-API-Key, Authorization';
 
 header("Access-Control-Allow-Origin: {$origin}");
 header("Access-Control-Allow-Methods: {$methods}");
 header("Access-Control-Allow-Headers: {$headers}");
 
-if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
+$requestMethod = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET';
+if ($requestMethod === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
 try {
-    $apiKeyHeaderName = $appConfig['auth']['header'] ?? 'HTTP_X_API_KEY';
-    $providedKey = $_SERVER[$apiKeyHeaderName] ?? null;
+    $apiKeyHeaderName = isset($appConfig['auth']['header']) ? $appConfig['auth']['header'] : 'HTTP_X_API_KEY';
+    $providedKey = isset($_SERVER[$apiKeyHeaderName]) ? $_SERVER[$apiKeyHeaderName] : null;
 
     if (!$providedKey) {
         $allHeaders = getallheaders();
@@ -34,7 +45,7 @@ try {
         }
     }
 
-    $masterKey = $appConfig['auth']['api_key'] ?? '';
+    $masterKey = isset($appConfig['auth']['api_key']) ? $appConfig['auth']['api_key'] : '';
     if (empty($providedKey) || empty($masterKey) || !hash_equals($masterKey, (string)$providedKey)) {
         http_response_code(401);
         echo json_encode([
@@ -44,11 +55,11 @@ try {
         exit;
     }
 
-    $driver = strtolower((string)($dbConfig['driver'] ?? 'pgsql'));
-    $host = (string)($dbConfig['host'] ?? 'localhost');
-    $port = (int)($dbConfig['port'] ?? ($driver === 'pgsql' ? 5432 : 3306));
-    $dbName = (string)($dbConfig['database'] ?? 'php_native');
-    $charset = (string)($dbConfig['charset'] ?? 'utf8');
+    $driver = strtolower(isset($dbConfig['driver']) ? (string)$dbConfig['driver'] : 'pgsql');
+    $host = isset($dbConfig['host']) ? (string)$dbConfig['host'] : 'localhost';
+    $port = (int)(isset($dbConfig['port']) ? $dbConfig['port'] : ($driver === 'pgsql' ? 5432 : 3306));
+    $dbName = isset($dbConfig['database']) ? (string)$dbConfig['database'] : 'php_native';
+    $charset = isset($dbConfig['charset']) ? (string)$dbConfig['charset'] : 'utf8';
 
     if ($driver === 'pgsql') {
         $dsn = sprintf("pgsql:host=%s;port=%d;dbname=%s", $host, $port, $dbName);
@@ -58,8 +69,8 @@ try {
 
     $pdo = new PDO(
         $dsn,
-        (string)($dbConfig['username'] ?? ''),
-        (string)($dbConfig['password'] ?? ''),
+        isset($dbConfig['username']) ? (string)$dbConfig['username'] : '',
+        isset($dbConfig['password']) ? (string)$dbConfig['password'] : '',
         [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -67,17 +78,17 @@ try {
         ]
     );
 
-    $page = max(1, (int)($_GET['page'] ?? 1));
-    $limit = max(1, min(100, (int)($_GET['limit'] ?? 10)));
+    $page = max(1, (int)(isset($_GET['page']) ? $_GET['page'] : 1));
+    $limit = max(1, min(100, (int)(isset($_GET['limit']) ? $_GET['limit'] : 10)));
     $offset = ($page - 1) * $limit;
 
     $hasFilter = (isset($_GET['date']) && $_GET['date'] !== '') ||
                  (isset($_GET['month']) && $_GET['month'] !== '') ||
                  (isset($_GET['year']) && $_GET['year'] !== '');
 
-    $dateParam = $hasFilter ? ($_GET['date'] ?? '') : date('d');
-    $monthParam = $hasFilter ? ($_GET['month'] ?? '') : date('m');
-    $yearParam = $hasFilter ? ($_GET['year'] ?? '') : date('Y');
+    $dateParam = $hasFilter ? (isset($_GET['date']) ? $_GET['date'] : '') : date('d');
+    $monthParam = $hasFilter ? (isset($_GET['month']) ? $_GET['month'] : '') : date('m');
+    $yearParam = $hasFilter ? (isset($_GET['year']) ? $_GET['year'] : '') : date('Y');
 
     $conditions = [];
     $params = [];
@@ -146,14 +157,14 @@ try {
         $items[] = [
             'id' => (int)$row['id'],
             'username' => (string)$row['username'],
-            'visit' => $row['visit'] ?? null,
-            'site' => $row['site'] ?? null,
-            'resource' => $row['resource'] ?? null,
-            'nation' => $row['nation'] ?? null,
-            'bali' => $row['bali'] ?? null,
-            'visit_time' => $row['visit_time'] ?? null,
-            'news' => $row['news'] ?? null,
-            'datetime' => $row['datetime'] ?? null,
+            'visit' => isset($row['visit']) ? $row['visit'] : null,
+            'site' => isset($row['site']) ? $row['site'] : null,
+            'resource' => isset($row['resource']) ? $row['resource'] : null,
+            'nation' => isset($row['nation']) ? $row['nation'] : null,
+            'bali' => isset($row['bali']) ? $row['bali'] : null,
+            'visit_time' => isset($row['visit_time']) ? $row['visit_time'] : null,
+            'news' => isset($row['news']) ? $row['news'] : null,
+            'datetime' => isset($row['datetime']) ? $row['datetime'] : null,
         ];
     }
 
@@ -172,7 +183,7 @@ try {
         ]
     ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
-} catch (Throwable $e) {
+} catch (Exception $e) {
     http_response_code(500);
     echo json_encode([
         'success' => false,
